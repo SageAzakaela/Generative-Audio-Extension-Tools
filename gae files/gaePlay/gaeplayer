@@ -3,6 +3,7 @@ import random
 import pygame
 import tkinter as tk
 from tkinter import filedialog
+from tkinter.ttk import Progressbar
 from pydub import AudioSegment
 import shutil
 import zipfile
@@ -10,16 +11,40 @@ import uuid
 from PIL import Image, ImageTk
 import time
 import atexit
+import threading  # Import the threading module
 
 # Variable to store the temporary directory path
 temp_dir = "TEMP"
 metadata = {}  # Store metadata globally
+progress = None  # Progress bar widget
+composition_thread = None  # Thread for composition generation
+
+# Function to update the progress bar
+def update_progress(step, total_steps):
+    if progress is not None:
+        progress["value"] = step
+        app.update_idletasks()
 
 # Function to create a random composition from layers
 def generate_random_composition():
-    global temp_dir, metadata
+    global temp_dir, metadata, progress, composition_thread
+
+    # Ensure a composition thread is not running
+    if composition_thread and composition_thread.is_alive():
+        return
+
+    # Create a new thread for composition generation
+    composition_thread = threading.Thread(target=generate_composition_in_thread)
+    composition_thread.start()
+
+# Function to generate composition in a separate thread
+def generate_composition_in_thread():
+    global temp_dir, metadata, progress
     gae_file_path = gae_file_entry.get()
 
+    # Delete the temporary directory if it exists
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
     # Ensure the temporary directory exists or create it
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
@@ -61,11 +86,17 @@ def generate_random_composition():
     # Create empty layers for the composition
     layers = [AudioSegment.silent(duration=0) for _ in range(len(layer_folders))]
 
+    total_steps = len(layer_folders)
+    progress = Progressbar(app, orient="horizontal", length=100, mode="determinate")
+    progress.pack()
+    progress["maximum"] = total_steps
+
     for i, layer_folder in enumerate(layer_folders):
         # Get a list of WAV files in each layer folder
         wav_files = [f for f in os.listdir(layer_folder) if f.endswith(".wav")]
         if not wav_files:
             print(f"No WAV files found in layer {i + 1}. Skipping this layer.")
+            update_progress(i + 1, total_steps)
             continue
 
         # Shuffle the list of WAV files to create a random arrangement for each layer
@@ -75,6 +106,8 @@ def generate_random_composition():
         for wav_file in wav_files:
             audio = AudioSegment.from_wav(os.path.join(layer_folder, wav_file))
             layers[i] += audio
+
+        update_progress(i + 1, total_steps)
 
     # Overlay all layers to create the composition
     composition = layers[0]
@@ -94,11 +127,20 @@ def generate_random_composition():
     pygame.mixer.music.play()
     print("Playing composition...")
 
+    # Hide and remove the progress bar
+    if progress is not None:
+        progress.pack_forget()
+        progress.destroy()
+    progress = None
+
 # Function to stop the currently playing composition and clean up the temporary directory
 def stop_composition():
-    pygame.mixer.music.stop()
-    if os.path.exists(temp_dir):
-        shutil.rmtree(temp_dir)
+    # Check if pygame mixer is initialized and music is playing
+    if pygame.mixer.get_init() and pygame.mixer.music.get_busy():
+        pygame.mixer.music.stop()
+    
+    # Clean up the temporary folder
+    cleanup_temp_folder()
     print("Composition stopped and temporary files deleted")
 
 # Function to display metadata and cover art after selecting a file
