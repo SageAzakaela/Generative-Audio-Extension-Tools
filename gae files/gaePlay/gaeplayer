@@ -7,13 +7,17 @@ from pydub import AudioSegment
 import shutil
 import zipfile
 import uuid
+from PIL import Image, ImageTk
+import time
+import atexit
 
 # Variable to store the temporary directory path
 temp_dir = "TEMP"
+metadata = {}  # Store metadata globally
 
 # Function to create a random composition from layers
 def generate_random_composition():
-    global temp_dir
+    global temp_dir, metadata
     gae_file_path = gae_file_entry.get()
 
     # Ensure the temporary directory exists or create it
@@ -30,6 +34,29 @@ def generate_random_composition():
     if not layer_folders:
         print("No layers found in the .gae file.")
         return
+
+    # Load metadata from the settings file
+    metadata = {}
+    for root, _, files in os.walk(temp_dir):
+        for file in files:
+            if file == "settings.txt":
+                with open(os.path.join(root, file), "r") as settings_file:
+                    for line in settings_file:
+                        key, value = line.strip().split(": ")
+                        metadata[key] = value
+
+    artist_name = metadata.get("artist", "Unknown Artist")
+    track_name = metadata.get("track_name", "Unknown Track")
+    bpm = metadata.get("bpm", "Unknown BPM")
+    key = metadata.get("key", "Unknown Key")
+
+    # Create a "Composition" folder within the TEMP folder
+    composition_folder = os.path.join(temp_dir, "Composition")
+    if not os.path.exists(composition_folder):
+        os.makedirs(composition_folder)
+
+    # Display metadata
+    display_metadata_and_cover_art()
 
     # Create empty layers for the composition
     layers = [AudioSegment.silent(duration=0) for _ in range(len(layer_folders))]
@@ -57,13 +84,13 @@ def generate_random_composition():
     # Generate a unique ID for the filename
     unique_id = uuid.uuid4().hex
 
-    # Save the resulting composition as a temporary WAV file with a unique name
-    composition.export(f"RandomComposition_{unique_id}.wav", format="wav")
+    # Save the resulting composition as a temporary WAV file in the "Composition" folder
+    composition.export(os.path.join(composition_folder, f"RandomComposition_{unique_id}.wav"), format="wav")
 
     # Initialize pygame mixer and play the composition
     pygame.mixer.init()
     pygame.mixer.music.set_volume(0.5)
-    pygame.mixer.music.load(f"RandomComposition_{unique_id}.wav")
+    pygame.mixer.music.load(os.path.join(composition_folder, f"RandomComposition_{unique_id}.wav"))
     pygame.mixer.music.play()
     print("Playing composition...")
 
@@ -72,11 +99,65 @@ def stop_composition():
     pygame.mixer.music.stop()
     if os.path.exists(temp_dir):
         shutil.rmtree(temp_dir)
-    print("Composition stopped and temporary files deleted.")
+    print("Composition stopped and temporary files deleted")
+
+# Function to display metadata and cover art after selecting a file
+def display_metadata_and_cover_art():
+    global metadata
+    artist_name = metadata.get("artist", "Unknown Artist")
+    track_name = metadata.get("track_name", "Unknown Track")
+    bpm = metadata.get("bpm", "Unknown BPM")
+    key = metadata.get("key", "Unknown Key")
+
+    # Display metadata
+    metadata_artist_label.config(text="Artist:")
+    metadata_artist_value.config(text=artist_name)
+    metadata_track_label.config(text="Track:")
+    metadata_track_value.config(text=track_name)
+    metadata_bpm_label.config(text="BPM:")
+    metadata_bpm_value.config(text=bpm)
+    metadata_key_label.config(text="Key:")
+    metadata_key_value.config(text=key)
+
+    # Load and display cover art (PNG)
+    cover_art_path = os.path.join(temp_dir, "cover_art.png")
+
+    if os.path.exists(cover_art_path):
+        cover_art_image = Image.open(cover_art_path)
+        cover_art_photo = ImageTk.PhotoImage(cover_art_image)
+        cover_art_label.config(image=cover_art_photo)
+        cover_art_label.image = cover_art_photo
+        cover_art_label.pack()
+    else:
+        print("Cover art image not found.")
+
+# Function to stop all playback and clean up when the window is closed
+
+# Function to stop all playback and clean up when the window is closed
+def on_closing():
+    # Stop Pygame playback
+    pygame.mixer.music.stop()
+    # Clean up the temporary folder
+    cleanup_temp_folder()
+    app.destroy()
+
+
+def cleanup_temp_folder():
+    if os.path.exists(temp_dir):
+        # Close any active Pygame mixer instances
+        pygame.mixer.quit()
+        # Delete the temporary folder and its contents
+        shutil.rmtree(temp_dir)
+
+# Register the cleanup_temp_folder function to run on exit
+atexit.register(cleanup_temp_folder)
 
 # Create the main application window
 app = tk.Tk()
-app.title("Random Composition Generator")
+app.title("gaePlayer")
+
+# Connect the on_closing function to the window's closing event
+app.protocol("WM_DELETE_WINDOW", on_closing)
 
 # Create and place input fields, labels, and buttons
 gae_file_label = tk.Label(app, text="Select a .gae file:")
@@ -92,5 +173,31 @@ generate_button.pack()
 
 stop_button = tk.Button(app, text="Stop Composition", command=stop_composition)
 stop_button.pack()
+
+metadata_frame = tk.Frame(app)
+metadata_frame.pack()
+
+metadata_artist_label = tk.Label(metadata_frame, text="Artist:")
+metadata_artist_label.pack(side="left")
+metadata_artist_value = tk.Label(metadata_frame, text="", wraplength=200)
+metadata_artist_value.pack(side="left")
+
+metadata_track_label = tk.Label(metadata_frame, text="Track:")
+metadata_track_label.pack(side="left")
+metadata_track_value = tk.Label(metadata_frame, text="", wraplength=200)
+metadata_track_value.pack(side="left")
+
+metadata_bpm_label = tk.Label(metadata_frame, text="BPM:")
+metadata_bpm_label.pack(side="left")
+metadata_bpm_value = tk.Label(metadata_frame, text="", wraplength=200)
+metadata_bpm_value.pack(side="left")
+
+metadata_key_label = tk.Label(metadata_frame, text="Key:")
+metadata_key_label.pack(side="left")
+metadata_key_value = tk.Label(metadata_frame, text="", wraplength=200)
+metadata_key_value.pack(side="left")
+
+cover_art_label = tk.Label(app)
+cover_art_label.pack()
 
 app.mainloop()
