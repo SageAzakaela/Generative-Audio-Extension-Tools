@@ -6,6 +6,9 @@
 - **.gaePlayer:** A player to load and play generative audio compositions created with .gaeMaker.
 - **.gaeExtract:** A tool to extract files made with .gaeMaker.
 
+## Get the Tools on itch.io!
+https://azakaela.itch.io/gaetools
+
 ## gaeMaker
 
 `gaeMaker` is a tool that enables you to create generative audio compositions by combining multiple audio layers. Here's how it works:
