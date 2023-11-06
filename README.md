@@ -4,10 +4,15 @@
 
 - **.gaeMaker:** A tool to create generative audio compositions by layering audio files.
 - **.gaePlayer:** A player to load and play generative audio compositions created with .gaeMaker.
+- **.gaeTrimmer:** A tool to segment audio files based on BPM and length in bars. Essential for prepping tracks for .gaeMaker
 - **.gaeExtract:** A tool to extract files made with .gaeMaker.
 
 ## Get the Tools on itch.io!
 https://azakaela.itch.io/gaetools
+
+## gaeTrimmer
+`gaeTrimmer` is a versatile audio loop trimming tool designed to prepare audio files for use in gaeMaker, an application for creating generative audio compositions. With gaeTrimmer, you can easily segment your audio tracks into 4 or 8 bar loops based on user-specified BPM (Beats Per Minute) and length in bars. This pre-processing step is essential for building rich and dynamic generative audio compositions.
+
 
 ## gaeMaker
 
