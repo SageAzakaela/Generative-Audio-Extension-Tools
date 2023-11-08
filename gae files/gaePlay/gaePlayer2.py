@@ -27,7 +27,7 @@ def update_progress(step, total_steps):
         app.update_idletasks()
 
 # Function to create a random composition from layers
-def generate_random_composition(use_seed=False):
+def generate_random_composition():
     stop_composition()
     global temp_dir, metadata, progress, composition_thread, seed
 
@@ -37,27 +37,18 @@ def generate_random_composition(use_seed=False):
 
     # Get the seed from the seed entry field
     seed_str = seed_entry.get()
-    seed = int(seed_str) if seed_str.isdigit() else None
 
-    # If "Use Seed" checkbox is checked, use the provided seed
-    if use_seed:
-        if seed is not None:
-            # Create a new thread for composition generation with the provided seed
-            composition_thread = threading.Thread(target=generate_composition_in_thread, args=(seed,))
-        else:
-            print("Invalid seed value. Using a random seed.")
-            seed = random.randint(1, 1000000)  # Generate a random seed
-            seed_entry.delete(0, tk.END)
-            seed_entry.insert(0, str(seed))  # Display the generated seed
-            composition_thread = threading.Thread(target=generate_composition_in_thread, args=(seed,))
-    else:
-        # Generate a composition with a random seed
+    if seed_str.strip():  # Check if the seed entry field is not empty
+        seed = int(seed_str)
+    elif use_seed_var.get():  # Check if "Use Seed" checkbox is checked
         seed = random.randint(1, 1000000)  # Generate a random seed
         seed_entry.delete(0, tk.END)
         seed_entry.insert(0, str(seed))  # Display the generated seed
-        composition_thread = threading.Thread(target=generate_composition_in_thread, args=(seed,))
 
+    # Create a new thread for composition generation
+    composition_thread = threading.Thread(target=generate_composition_in_thread, args=(seed,))
     composition_thread.start()
+
 
 
 
