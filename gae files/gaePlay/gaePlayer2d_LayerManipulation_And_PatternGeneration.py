@@ -415,40 +415,42 @@ cover_art_label = tk.Label(app)
 cover_art_label.pack()
 
 def save_composition():
-    global metadata
-    # Stop the composition if it's currently playing
-    if pygame.mixer.get_init() and pygame.mixer.music.get_busy():
-        pygame.mixer.music.stop()
+    if os.path.exists(temp_dir):
+        # Stop the composition if it's currently playing
+        if pygame.mixer.get_init() and pygame.mixer.music.get_busy():
+            pygame.mixer.music.stop()
 
-    # Ask the user for the destination directory
-    destination_dir = filedialog.askdirectory(title="Select Destination Directory")
+        # Ask the user for the destination directory
+        destination_dir = filedialog.askdirectory(title="Select Destination Directory")
 
-    if not destination_dir:
-        print("Save operation canceled by the user.")
-        return
+        if not destination_dir:
+            print("Save operation canceled by the user.")
+            return
 
-    # Construct the source path of the current composition
-    composition_folder = os.path.join(temp_dir, "Composition")
-    composition_path = os.path.join(composition_folder, f"RandomComposition_{(seed_entry.get() + pattern_entry.get())}.wav")
+        # Construct the source path of the current composition
+        composition_folder = os.path.join(temp_dir, "Composition")
+        composition_path = os.path.join(composition_folder, f"RandomComposition_{(seed_entry.get() + pattern_entry.get())}.wav")
 
-    if not os.path.exists(composition_path):
-        print("No composition to save. Generate a composition first.")
-        return
+        if not os.path.exists(composition_path):
+            print("No composition to save. Generate a composition first.")
+            return
 
-    artist_name = metadata.get("artist", "Unknown Artist")
-    track_name = metadata.get("track_name", "Unknown Track")
+        artist_name = metadata.get("artist", "Unknown Artist")
+        track_name = metadata.get("track_name", "Unknown Track")
 
-    # Construct the destination path
-    destination_path = os.path.join(destination_dir, f"{artist_name}_{track_name}_{(seed_entry.get() + pattern_entry.get())}.wav")
+        # Construct the destination path
+        destination_path = os.path.join(destination_dir, f"{artist_name}_{track_name}_{(seed_entry.get() + pattern_entry.get())}.wav")
 
-    try:
-        # Copy the composition to the user-defined location
-        shutil.copy2(composition_path, destination_path)
-        print(f"Composition saved to: {destination_path}")
-    except Exception as e:
-        print(f"Error saving composition: {e}")
+        try:
+            # Copy the composition to the user-defined location
+            shutil.copy2(composition_path, destination_path)
+            print(f"Composition saved to: {destination_path}")
+        except Exception as e:
+            print(f"Error saving composition: {e}")
 
-    stop_composition()
+        stop_composition()
+    else:
+        print("There aint nothing to save, temporary files were deleted. Generate a composition and try again.")
 
 
 save_composition_button = tk.Button(app, text="Save Composition", command=save_composition)
