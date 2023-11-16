@@ -5,6 +5,7 @@
 - **.gaeMaker:** A tool to create generative audio compositions by layering audio files.
 - **.gaePlayer:** A player to load and play generative audio compositions created with .gaeMaker.
 - **.gaeTrimmer:** A tool to segment audio files based on BPM and length in bars. Essential for prepping tracks for .gaeMaker
+- **.gaeTag:** Two tools, one for adding tags to files within a folder quickly, and another that lets you listen to a file, then add a tag -- which is kinda slow
 - **.gaeExtract:** A tool to extract files made with .gaeMaker.
 
 ## Get the Tools on itch.io!
