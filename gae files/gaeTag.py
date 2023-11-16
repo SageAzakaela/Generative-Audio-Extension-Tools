@@ -73,7 +73,7 @@ tag_label = tk.Label(root, text="Select a Tag:")
 tag_label.pack()
 
 tag_var = tk.StringVar()
-tag_dropdown = tk.OptionMenu(root, tag_var, "_A", "_B", "_C", "_D", "_Intro", "_Outro", "_Repeat", "_Mute")
+tag_dropdown = tk.OptionMenu(root, tag_var, "_A", "_B", "_C", "_D", "_I" , "_O", "_R",)
 tag_dropdown.pack()
 
 rename_button = tk.Button(root, text="Append Tag and Rename", command=rename_and_refresh)
